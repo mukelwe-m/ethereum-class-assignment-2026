@@ -13,7 +13,7 @@ contract FNBToken is ERC20 {
      *
      * Default ERC20 decimals is 18.
      */
-    constructor(uint256 initialSupply) ERC20("FNB Token", "FNBT") {
-        _mint(msg.sender, initialSupply);
+    constructor() ERC20("FNB Token", "FNBT") {
+        _mint(msg.sender, 1_000_000 * 10 ** decimals());
     }
 }

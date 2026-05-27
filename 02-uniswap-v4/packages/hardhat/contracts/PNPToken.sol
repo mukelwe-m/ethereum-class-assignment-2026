@@ -13,7 +13,7 @@ contract PNPToken is ERC20 {
      *
      * Default ERC20 decimals is 18.
      */
-    constructor(uint256 initialSupply) ERC20("PNP Token", "PNPT") {
-        _mint(msg.sender, initialSupply);
+    constructor() ERC20("PNP Token", "PNPT") {
+        _mint(msg.sender, 1_000_000 * 10 ** decimals());
     }
 }
