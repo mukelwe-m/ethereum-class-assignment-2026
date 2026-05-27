@@ -1,44 +1,42 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { Contract } from "ethers";
 
-/**
- * Deploys a contract named "YourContract" using the deployer account and
- * constructor arguments set to the deployer address
- *
- * @param hre HardhatRuntimeEnvironment object.
- */
-const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  /*
-    On localhost, the deployer account is the one that comes with Hardhat, which is already funded.
-
-    When deploying to live networks (e.g `yarn deploy --network sepolia`), the deployer account
-    should have sufficient balance to pay for the gas fees for contract creation.
-
-    You can generate a random account with `yarn generate` or `yarn account:import` to import your
-    existing PK which will fill DEPLOYER_PRIVATE_KEY_ENCRYPTED in the .env file (then used on hardhat.config.ts)
-    You can run the `yarn account` command to check your balance in every network.
-  */
+const deployAssignmentContracts: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
-  await deploy("YourContract", {
+  // 1M tokens with 18 decimals (matches what your test expects)
+  const INITIAL_SUPPLY = "1000000000000000000000000"; 
+
+  console.log("🚀 Starting deployment with account:", deployer);
+
+  // 1. Deploy PNPToken
+  const pnpToken = await deploy("PNPToken", {
     from: deployer,
-    // Contract constructor arguments
-    args: [deployer],
+    args: [INITIAL_SUPPLY],
     log: true,
-    // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
-    // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });
 
-  // Get the deployed contract to interact with it after deploying.
-  const yourContract = await hre.ethers.getContract<Contract>("YourContract", deployer);
-  console.log("👋 Initial greeting:", await yourContract.greeting());
+  // 2. Deploy FNBToken
+  const fnbToken = await deploy("FNBToken", {
+    from: deployer,
+    args: [INITIAL_SUPPLY],
+    log: true,
+    autoMine: true,
+  });
+
+  // 3. Deploy OrderBook using the addresses of the two tokens
+  await deploy("OrderBook", {
+    from: deployer,
+    args: [pnpToken.address, fnbToken.address],
+    log: true,
+    autoMine: true,
+  });
+
+  console.log("✅ All assignment contracts deployed successfully!");
 };
 
-export default deployYourContract;
+export default deployAssignmentContracts;
 
-// Tags are useful if you have multiple deploy files and only want to run one of them.
-// e.g. yarn deploy --tags YourContract
-deployYourContract.tags = ["YourContract"];
+deployAssignmentContracts.tags = ["Assignment"];
