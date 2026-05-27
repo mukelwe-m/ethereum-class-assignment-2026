@@ -42,7 +42,7 @@ Build a smart contract that allows users to place and match orders between `PNPT
 
 After navigating to the `01-order-book` folder, run:
 
-`yarn test test/AssignmentSolition.ts`
+`yarn test test/AssignmentSolution.ts`
 
 ## Submission Checklist
 

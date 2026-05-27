@@ -16,11 +16,13 @@ describe("Assignment Solution", function () {
     const [deployer] = await ethers.getSigners();
 
     const tokenAFactory = await ethers.getContractFactory("PNPToken");
-    tokenA = (await tokenAFactory.deploy(INITIAL_SUPPLY)) as PNPToken;
+    // Convert the BigInt supply to a plain string representation
+    tokenA = (await tokenAFactory.deploy(INITIAL_SUPPLY.toString())) as PNPToken;
     await tokenA.waitForDeployment();
 
     const tokenBFactory = await ethers.getContractFactory("FNBToken");
-    tokenB = (await tokenBFactory.deploy(INITIAL_SUPPLY)) as FNBToken;
+    // Convert the BigInt supply to a plain string representation
+    tokenB = (await tokenBFactory.deploy(INITIAL_SUPPLY.toString())) as FNBToken;
     await tokenB.waitForDeployment();
 
     const orderBookFactory = await ethers.getContractFactory("OrderBook");
