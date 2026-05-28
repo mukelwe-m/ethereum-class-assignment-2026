@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Address } from "@scaffold-ui/components";
 import type { NextPage } from "next";
-import { hardhat } from "viem/chains";
 import { useAccount } from "wagmi";
-import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { BugAntIcon, MagnifyingGlassIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import { Address } from "~~/components/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 const Home: NextPage = () => {
@@ -15,62 +14,46 @@ const Home: NextPage = () => {
   return (
     <>
       <div className="flex items-center flex-col grow pt-10">
-        <div className="px-5">
-          <h1 className="text-center">
-            <span className="block text-2xl mb-2">Welcome to</span>
-            <span className="block text-4xl font-bold">Scaffold-ETH 2</span>
+        <div className="px-5 text-center">
+          <h1>
+            <span className="block text-2xl mb-2">DeFi Exchange Dashboard</span>
+            <span className="block text-4xl font-bold text-primary">PNP vs FNB Order Book</span>
           </h1>
-          <div className="flex justify-center items-center space-x-2 flex-col">
-            <p className="my-2 font-medium">Connected Address:</p>
-            <Address
-              address={connectedAddress}
-              chain={targetNetwork}
-              blockExplorerAddressLink={
-                targetNetwork.id === hardhat.id ? `/blockexplorer/address/${connectedAddress}` : undefined
-              }
-            />
-          </div>
 
-          <p className="text-center text-lg">
-            Get started by editing{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/nextjs/app/page.tsx
-            </code>
-          </p>
-          <p className="text-center text-lg">
-            Edit your smart contract{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              YourContract.sol
-            </code>{" "}
-            in{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/hardhat/contracts
-            </code>
-          </p>
+          <div className="flex justify-center items-center space-x-2 flex-col my-6 bg-base-200 p-4 rounded-xl">
+            <p className="font-medium m-0 mb-1">Active Trader Session:</p>
+            <Address address={connectedAddress} />
+          </div>
         </div>
 
-        <div className="grow bg-base-300 w-full mt-16 px-8 py-12">
-          <div className="flex justify-center items-center gap-12 flex-col md:flex-row">
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <BugAntIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Tinker with your smart contract using the{" "}
-                <Link href="/debug" passHref className="link">
+        <div className="grow bg-base-300 w-full mt-10 px-8 py-12">
+          <div className="flex justify-center items-center gap-8 flex-col md:flex-row max-w-4xl mx-auto">
+            
+            {/* Debug Link */}
+            <div className="flex flex-col bg-base-100 px-6 py-8 text-center items-center flex-1 rounded-3xl shadow-md min-h-[180px]">
+              <BugAntIcon className="h-8 w-8 text-primary mb-2" />
+              <p className="font-semibold text-lg m-0">Interact</p>
+              <p className="text-sm mt-1">
+                Place orders and invoke functions via the{" "}
+                <Link href="/debug" passHref className="link font-bold">
                   Debug Contracts
                 </Link>{" "}
-                tab.
+                portal.
               </p>
             </div>
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <MagnifyingGlassIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Explore your local transactions with the{" "}
-                <Link href="/blockexplorer" passHref className="link">
+
+            {/* Block Explorer Link */}
+            <div className="flex flex-col bg-base-100 px-6 py-8 text-center items-center flex-1 rounded-3xl shadow-md min-h-[180px]">
+              <MagnifyingGlassIcon className="h-8 w-8 text-primary mb-2" />
+              <p className="font-semibold text-lg m-0">Ledger</p>
+              <p className="text-sm mt-1">
+                Audit local state changes using the internal{" "}
+                <Link href="/blockexplorer" passHref className="link font-bold">
                   Block Explorer
-                </Link>{" "}
-                tab.
+                </Link>.
               </p>
             </div>
+
           </div>
         </div>
       </div>
