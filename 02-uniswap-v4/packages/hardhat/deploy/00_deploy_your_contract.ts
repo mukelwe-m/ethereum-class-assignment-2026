@@ -1,16 +1,13 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-const deployAssignmentContracts: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+const deployYourContracts: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
-  // 1M tokens with 18 decimals (matches what your test expects)
-  const INITIAL_SUPPLY = "1000000000000000000000000"; 
+  const INITIAL_SUPPLY = hre.ethers.parseUnits("1000000", 18);
 
-  console.log("🚀 Starting deployment with account:", deployer);
-
-  // 1. Deploy PNPToken
+  // 1. Deploy PNPToken (Passes the required initial supply argument)
   const pnpToken = await deploy("PNPToken", {
     from: deployer,
     args: [INITIAL_SUPPLY],
@@ -18,7 +15,7 @@ const deployAssignmentContracts: DeployFunction = async function (hre: HardhatRu
     autoMine: true,
   });
 
-  // 2. Deploy FNBToken
+  // 2. Deploy FNBToken (Passes the required initial supply argument)
   const fnbToken = await deploy("FNBToken", {
     from: deployer,
     args: [INITIAL_SUPPLY],
@@ -26,7 +23,7 @@ const deployAssignmentContracts: DeployFunction = async function (hre: HardhatRu
     autoMine: true,
   });
 
-  // 3. Deploy OrderBook using the addresses of the two tokens
+  // 3. Deploy OrderBook (Passes the deployed token addresses to the constructor)
   await deploy("OrderBook", {
     from: deployer,
     args: [pnpToken.address, fnbToken.address],
@@ -34,9 +31,8 @@ const deployAssignmentContracts: DeployFunction = async function (hre: HardhatRu
     autoMine: true,
   });
 
-  console.log("✅ All assignment contracts deployed successfully!");
+  console.log("All contracts deployed successfully and synced with frontend types!");
 };
 
-export default deployAssignmentContracts;
-
-deployAssignmentContracts.tags = ["Assignment"];
+export default deployYourContracts;
+deployYourContracts.tags = ["OrderBookSystem"];
