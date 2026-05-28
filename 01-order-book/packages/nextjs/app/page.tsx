@@ -3,8 +3,8 @@
 import Link from "next/link";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
-import { BugAntIcon, MagnifyingGlassIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
-import { Address } from "~~/components/scaffold-eth";
+import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { Address } from "@scaffold-ui/components"; // Restored to your original working import
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 const Home: NextPage = () => {
