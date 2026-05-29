@@ -4249,7 +4249,9 @@ __metadata:
     "@types/qrcode": "npm:~1.5.5"
     "@typescript-eslint/eslint-plugin": "npm:~8.27.0"
     "@typescript-eslint/parser": "npm:~8.27.0"
+    "@uniswap/permit2": "file:./node_modules/@uniswap/v4-periphery/lib/permit2"
     "@uniswap/v4-core": "npm:^1.0.2"
+    "@uniswap/v4-periphery": "npm:^1.0.3"
     chai: "npm:~4.5.0"
     dotenv: "npm:~16.4.5"
     envfile: "npm:~7.1.0"
@@ -4262,6 +4264,7 @@ __metadata:
     hardhat-deploy: "npm:^1.0.4"
     hardhat-deploy-ethers: "npm:~0.4.2"
     hardhat-gas-reporter: "npm:~2.2.1"
+    permit2: "file:./permit2"
     prettier: "npm:^3.5.3"
     prettier-plugin-solidity: "npm:~1.4.1"
     qrcode: "npm:~1.5.4"
@@ -6039,6 +6042,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@uniswap/permit2@file:./node_modules/@uniswap/v4-periphery/lib/permit2::locator=%40se-2%2Fhardhat%40workspace%3Apackages%2Fhardhat":
+  version: 1.0.0
+  resolution: "@uniswap/permit2@file:./node_modules/@uniswap/v4-periphery/lib/permit2#./node_modules/@uniswap/v4-periphery/lib/permit2::hash=415256&locator=%40se-2%2Fhardhat%40workspace%3Apackages%2Fhardhat"
+  checksum: 10/98f8836802077c557be81d5b1b5716df079682618491e5ca119f7c2d011ce407a7a4ac04a89f4dd021d3ec38aaf68ee2b004b329e44facd06c16ef29354b9487
+  languageName: node
+  linkType: hard
+
 "@uniswap/sdk-core@npm:^7.12.1, @uniswap/sdk-core@npm:^7.7.2":
   version: 7.13.0
   resolution: "@uniswap/sdk-core@npm:7.13.0"
@@ -6075,6 +6085,13 @@ __metadata:
   version: 1.0.2
   resolution: "@uniswap/v4-core@npm:1.0.2"
   checksum: 10/8e3a218ccecc507c81e0693170b7c46fa0b0784b4aed95edc05845bdfa7dd2ba77d178db74fe47424684db736b8f1725126c2c6bad3a20f45ec8d9e9de88d5dc
+  languageName: node
+  linkType: hard
+
+"@uniswap/v4-periphery@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "@uniswap/v4-periphery@npm:1.0.3"
+  checksum: 10/515b8e4749d8af18d37d77691cb0d42cb66f05c3adc1b88120ee0e4fe61d6ea5c5ab780c7b1045d7f5cf8f68625d8a60272c2fe433302f4f764a106b5593f0d8
   languageName: node
   linkType: hard
 
@@ -15740,6 +15757,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"permit2@file:./permit2::locator=%40se-2%2Fhardhat%40workspace%3Apackages%2Fhardhat":
+  version: 1.0.0
+  resolution: "permit2@file:./permit2#./permit2::hash=bfdb34&locator=%40se-2%2Fhardhat%40workspace%3Apackages%2Fhardhat"
+  checksum: 10/9357706b2f52618a8246698be07d5da8688a9877491c61d7f52954d96bdcfd394f5656310da8fa346700889f651f357ad83db807503ed234272b7a74a02e996c
+  languageName: node
+  linkType: hard
+
 "picocolors@npm:1.0.0":
   version: 1.0.0
   resolution: "picocolors@npm:1.0.0"
@@ -17065,6 +17089,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "se-2@workspace:."
   dependencies:
+    "@uniswap/v4-core": "npm:^1.0.2"
+    "@uniswap/v4-periphery": "npm:^1.0.3"
     lint-staged: "npm:~13.2.2"
   languageName: unknown
   linkType: soft
