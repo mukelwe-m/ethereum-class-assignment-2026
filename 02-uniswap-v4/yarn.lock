@@ -15759,8 +15759,8 @@ __metadata:
 
 "permit2@file:./permit2::locator=%40se-2%2Fhardhat%40workspace%3Apackages%2Fhardhat":
   version: 1.0.0
-  resolution: "permit2@file:./permit2#./permit2::hash=bfdb34&locator=%40se-2%2Fhardhat%40workspace%3Apackages%2Fhardhat"
-  checksum: 10/9357706b2f52618a8246698be07d5da8688a9877491c61d7f52954d96bdcfd394f5656310da8fa346700889f651f357ad83db807503ed234272b7a74a02e996c
+  resolution: "permit2@file:./permit2#./permit2::hash=5af98d&locator=%40se-2%2Fhardhat%40workspace%3Apackages%2Fhardhat"
+  checksum: 10/f6407fd924f74b671b7a56a20067ff90c39d526a82a467b8d979f845a77ccf77968c73a5f690cc99405b15208ca96a820fa422c78d4f9111ede246062ec313ea
   languageName: node
   linkType: hard
 

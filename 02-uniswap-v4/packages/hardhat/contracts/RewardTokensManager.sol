@@ -15,7 +15,12 @@ import { LiquidityAmounts } from "@uniswap/v4-periphery/src/libraries/LiquidityA
 import { Actions } from "@uniswap/v4-periphery/src/libraries/Actions.sol";
 import { IPositionManager } from "@uniswap/v4-periphery/src/interfaces/IPositionManager.sol";
 
+interface IHasPermit2 {
+    function permit2() external view returns (address);
+}
+
 contract RewardTokensManager is Ownable {
+    // REQUIRED: Fee tier 0.3% (3000 bips), tick spacing 60, and no hooks
     uint24 public constant FEE_TIER = 3000;
     int24 public constant TICK_SPACING = 60;
     address public constant HOOKS = address(0);
@@ -24,10 +29,12 @@ contract RewardTokensManager is Ownable {
     IPositionManager public immutable positionManager;
     IERC20 public immutable pnpToken;
     IERC20 public immutable fnbToken;
+    address public immutable permit2;
 
     PoolId public poolId;
     mapping(PoolId => bool) public createdPools;
 
+    // TODO REQUIREMENT: Dedicated event emitted when a pool is successfully initialized
     event PoolCreated(
         bytes32 indexed poolId,
         address indexed currency0,
@@ -38,6 +45,7 @@ contract RewardTokensManager is Ownable {
         uint160 sqrtPriceX96
     );
 
+    // TODO REQUIREMENT: Dedicated event emitted when a liquidity position is minted
     event LiquidityMinted(
         bytes32 indexed poolId,
         uint256 indexed positionId,
@@ -53,6 +61,7 @@ contract RewardTokensManager is Ownable {
     error PoolNotCreated();
     error PoolAlreadyCreated();
 
+    // TODO REQUIREMENT: Constructor receives the base pool manager and token addresses
     constructor(
         address _poolManager,
         address _positionManager,
@@ -63,9 +72,17 @@ contract RewardTokensManager is Ownable {
         positionManager = IPositionManager(_positionManager);
         pnpToken = IERC20(_pnpToken);
         fnbToken = IERC20(_fnbToken);
+
+        // Safely extract the internal Permit2 address used by the PositionManager
+        try IHasPermit2(_positionManager).permit2() returns (address p2) {
+            permit2 = p2;
+        } catch {
+            permit2 = address(0);
+        }
     }
 
-    /// @notice Returns the canonical token order used by the Uniswap pool key.
+    /// @notice Returns token addresses sorted in canonical order (lower address first)
+    /// @dev Required because Uniswap v4 pools always require sorted asset pairs
     function getCanonicalCurrencies() public view returns (address currency0, address currency1) {
         if (address(pnpToken) < address(fnbToken)) {
             return (address(pnpToken), address(fnbToken));
@@ -73,31 +90,36 @@ contract RewardTokensManager is Ownable {
         return (address(fnbToken), address(pnpToken));
     }
 
-    /// @notice Returns the target tick implied by 1 FNBT = 10 PNPT in the canonical pool order.
+    /// @notice Calculates the target tick where the pool price perfectly equals 1 FNBT = 10 PNPT
+    /// @dev Maps back to the assignment ratio using the math formula: price = currency0 / currency1
     function getTargetTick() public view returns (int24) {
         (address currency0, ) = getCanonicalCurrencies();
-        bool priceGreaterThanOne = currency0 == address(pnpToken);
-        uint160 assignmentSqrtPriceX96 = _getAssignmentSqrtPriceX96(priceGreaterThanOne);
+        bool currency0IsPnp = currency0 == address(pnpToken);
+        uint160 assignmentSqrtPriceX96 = _getAssignmentSqrtPriceX96(currency0IsPnp);
         return TickMath.getTickAtSqrtPrice(assignmentSqrtPriceX96);
     }
 
-    /// @notice Returns the pool identifier for the currently created pool.
+    /// @notice Returns the active pool identifier as a raw bytes32 blob
     function getPoolId() public view returns (bytes32) {
         return PoolId.unwrap(poolId);
     }
 
-    /// @notice Creates the Uniswap v4 pool with fee 0.3%, tick spacing 60, and no hooks.
-    /// @dev onlyOwner is used because the pool creation flow should be controlled by the deployer in this assignment.
+    // TODO REQUIREMENT: Initialize the pool through the v4 PoolManager
+    // @dev onlyOwner modifier ensures only the deployment admin can trigger pool registration
     function createPool(uint160 sqrtPriceX96) external onlyOwner returns (bytes32) {
         if (PoolId.unwrap(poolId) != bytes32(0)) revert PoolAlreadyCreated();
 
+        // Assemble the structure payload for the target market
         PoolKey memory key = _getPoolKey();
+
+        // Execute the call to register the market on-chain
         poolManager.initialize(key, sqrtPriceX96);
 
         PoolId createdPoolId = key.toId();
         poolId = createdPoolId;
         createdPools[createdPoolId] = true;
 
+        // TODO REQUIREMENT: Emit the explicit pool creation event details
         emit PoolCreated(
             PoolId.unwrap(createdPoolId),
             Currency.unwrap(key.currency0),
@@ -110,23 +132,25 @@ contract RewardTokensManager is Ownable {
         return PoolId.unwrap(createdPoolId);
     }
 
-    /// @notice Mints a concentrated liquidity position for the current pool.
-    /// @dev The caller must approve this contract for both tokens before calling.
+    /// @notice Mints concentrated liquidity into the active Uniswap v4 pool
     function mintLiquidity(
         int24 tickLower,
         int24 tickUpper,
         uint256 amount0Desired,
         uint256 amount1Desired
     ) external returns (uint256 positionId, bytes32 poolId_) {
+        // TODO REQUIREMENT (1): Validate user inputs and tick alignment bounds
         if (amount0Desired == 0 && amount1Desired == 0) revert InvalidMintAmounts();
         if (tickLower >= tickUpper) revert InvalidTickRange();
         if (tickLower % TICK_SPACING != 0 || tickUpper % TICK_SPACING != 0) revert InvalidTickRange();
         if (tickLower < TickMath.minUsableTick(TICK_SPACING) || tickUpper > TickMath.maxUsableTick(TICK_SPACING))
             revert InvalidTickRange();
 
+        // TODO REQUIREMENT (2): Ensure the user's tick bounds include the 1 FNBT = 10 PNPT target price
         int24 targetTick = getTargetTick();
         if (tickLower > targetTick || tickUpper < targetTick) revert TickRangeDoesNotCoverAssignmentPrice();
 
+        // TODO REQUIREMENT (3): Resolve and verify the unique poolId from the key mapping
         PoolId createdPoolId = poolId;
         if (PoolId.unwrap(createdPoolId) == bytes32(0) || !createdPools[createdPoolId]) revert PoolNotCreated();
 
@@ -134,6 +158,7 @@ contract RewardTokensManager is Ownable {
         PoolId resolvedPoolId = key.toId();
         if (PoolId.unwrap(resolvedPoolId) != PoolId.unwrap(createdPoolId)) revert PoolNotCreated();
 
+        // TODO REQUIREMENT (4): Compute liquidity amounts based on current pool price parameters
         (uint160 sqrtPriceX96, , , ) = StateLibrary.getSlot0(poolManager, resolvedPoolId);
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
             sqrtPriceX96,
@@ -146,19 +171,24 @@ contract RewardTokensManager is Ownable {
         address token0 = Currency.unwrap(key.currency0);
         address token1 = Currency.unwrap(key.currency1);
 
+        // TODO REQUIREMENT (5): Pull the required funding amounts from the user wallet
+        // TODO REQUIREMENT (6): Approve Permit2 so PositionManager can settle the token balances
         if (amount0Desired > 0) {
             IERC20(token0).transferFrom(msg.sender, address(this), amount0Desired);
-            IERC20(token0).approve(address(positionManager), amount0Desired);
+            IERC20(token0).approve(address(positionManager), type(uint256).max);
+            if (permit2 != address(0)) IERC20(token0).approve(permit2, type(uint256).max);
         }
         if (amount1Desired > 0) {
             IERC20(token1).transferFrom(msg.sender, address(this), amount1Desired);
-            IERC20(token1).approve(address(positionManager), amount1Desired);
+            IERC20(token1).approve(address(positionManager), type(uint256).max);
+            if (permit2 != address(0)) IERC20(token1).approve(permit2, type(uint256).max);
         }
 
+        // TODO REQUIREMENT (7): Encode multi-call operations for position management router
         positionId = positionManager.nextTokenId();
 
-        bytes memory actions = abi.encodePacked(uint8(Actions.MINT_POSITION));
-        bytes[] memory params = new bytes[](1);
+        bytes memory actions = abi.encodePacked(uint8(Actions.MINT_POSITION), uint8(Actions.SETTLE_PAIR));
+        bytes[] memory params = new bytes[](2);
         params[0] = abi.encode(
             key,
             tickLower,
@@ -169,9 +199,13 @@ contract RewardTokensManager is Ownable {
             msg.sender,
             bytes("")
         );
+        params[1] = abi.encode(key.currency0, key.currency1);
 
         positionManager.modifyLiquidities(abi.encode(actions, params), block.timestamp + 1 hours);
 
+        // TODO REQUIREMENT (8): Verification is implicit as any downstream failures revert the transaction frame
+
+        // TODO REQUIREMENT (9): Return any unspent token dust to the sender and emit assignment event
         _refundDust(token0);
         _refundDust(token1);
 
@@ -179,6 +213,7 @@ contract RewardTokensManager is Ownable {
         return (positionId, PoolId.unwrap(resolvedPoolId));
     }
 
+    /// @notice Builds the configuration key object for the liquidity pool structure
     function _getPoolKey() internal view returns (PoolKey memory) {
         (address currency0, address currency1) = getCanonicalCurrencies();
         return
@@ -191,6 +226,7 @@ contract RewardTokensManager is Ownable {
             });
     }
 
+    /// @notice Transfers remaining contract tokens back to the transaction caller
     function _refundDust(address token) internal {
         uint256 balance = IERC20(token).balanceOf(address(this));
         if (balance > 0) {
@@ -198,13 +234,15 @@ contract RewardTokensManager is Ownable {
         }
     }
 
+    /// @notice Internal square-root price calculator for target math validation
     function _getAssignmentSqrtPriceX96(bool currency0IsPnp) internal pure returns (uint160) {
-        uint256 numerator = currency0IsPnp ? 10 : 1;
-        uint256 denominator = currency0IsPnp ? 1 : 10;
+        uint256 numerator = currency0IsPnp ? 1 : 10;
+        uint256 denominator = currency0IsPnp ? 10 : 1;
         uint256 priceQ192 = (numerator * (uint256(FixedPoint96.Q96) ** 2)) / denominator;
         return _sqrt(priceQ192);
     }
 
+    /// @notice Pure integer square root helper for gas efficiency
     function _sqrt(uint256 value) internal pure returns (uint160 result) {
         if (value == 0) return 0;
         uint256 x = value;
@@ -216,8 +254,9 @@ contract RewardTokensManager is Ownable {
             y = (y + x / y) >> 1;
         }
         result = uint160(y);
-        if (result * result > value) {
-            result = uint160(result - 1);
+        uint256 result256 = uint256(result);
+        if (result256 * result256 > value) {
+            result = uint160(result256 - 1);
         }
     }
 }
